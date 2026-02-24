@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Inversión 2026</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #f5f5f5; 
+            padding: 20px; 
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; }
+        .subtitle { 
+            text-align: center; 
+            color: #666; 
+            margin-bottom: 20px; 
+            font-size: 0.9em;
+            background: #e0f2fe;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+        
+        .btn { 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 600;
+            margin: 5px;
+        }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-success { background: #059669; color: white; }
+        
+        .calendar-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+            margin: 20px 0;
+        }
+        .month-card { 
+            background: white; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .month-header { 
+            background: #1e293b; 
+            color: white; 
+            padding: 12px; 
+            text-align: center;
+            font-weight: bold;
+        }
+        .days-grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 1px; 
+            background: #e5e7eb;
+        }
+        .day-header { 
+            background: #f8fafc; 
+            padding: 8px; 
+            text-align: center; 
+            font-size: 0.75em; 
+            font-weight: 600;
+        }
+        .day-cell { 
+            background: white; 
+            min-height: 80px; 
+            padding: 6px; 
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .day-cell:hover { background: #f0f9ff; }
+        .day-number { font-weight: bold; color: #1e293b; margin-bottom: 4px; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .concept-box {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 2px solid;
+        }
+        .box-inicial { border-color: #0369a1; background: #f0f9ff; }
+        .box-neto { border-color: #d97706; background: #fffbeb; }
+        .box-final { border-color: #7c3aed; background: #f5f3ff; }
+        
+        .label { font-size: 0.85em; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .value { font-size: 2em; font-weight: bold; font-family: monospace; }
+        .color-inicial { color: #0369a1; }
+        .color-neto { color: #d97706; }
+        .color-final { color: #7c3aed; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            margin-top: 8px;
+        }
+        
+        .transaction-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #d97706;
+        }
+        
+        .summary {
+            background: #1e1b4b;
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .summary-item { text-align: center; }
+        .summary-label { font-size: 0.9em; opacity: 0.8; margin-bottom: 8px; }
+        .summary-value { font-size: 1.8em; font-weight: bold; font-family: monospace; }
+        
+        .formula-box {
+            background: #1e293b;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            font-size: 0.95em;
+            text-align: center;
+        }
+        .highlight { color: #fbbf24; font-weight: bold; }
+        
+        .neto-display {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .neto-icon {
+            font-size: 1.5em;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .neto-positive { background: #dcfce7; color: #166534; }
+        .neto-negative { background: #fee2e2; color: #991b1b; }
+        .neto-zero { background: #f3f4f6; color: #6b7280; }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .badge-ok { background: #dcfce7; color: #166534; }
+        .badge-loss { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Control de Inversión 2026</h1>
+        <p class="subtitle">Final = Inicial - Aportado + (Aportado × Cuota)</p>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="btn btn-primary" onclick="exportData()">💾 Guardar</button>
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">📁 Cargar</button>
+            <input type="file" id="fileInput" style="display:none" accept=".json" onchange="importData(this)">
+            <button class="btn btn-danger" onclick="clearAll()">🗑️ Borrar</button>
+        </div>
+
+        <div id="calendar"></div>
+
+        <div class="summary">
+            <div class="summary-item">
+                <div class="summary-label">Capital Inicial</div>
+                <div class="summary-value" id="resInicial">0€</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Neto Total</div>
+                <div class="summary-value" id="resNeto">0€</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Capital Final</div>
+                <div class="summary-value" id="resFinal">0€</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Día</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+
+            <div class="formula-box">
+                <span class="highlight">Final</span> = Inicial + Neto
+            </div>
+
+            <!-- Capital Inicial -->
+            <div class="concept-box box-inicial">
+                <div class="label color-inicial">Capital Inicial</div>
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <input type="number" id="inputInicial" placeholder="0.00" step="0.01">
+                    <button class="btn btn-success" onclick="guardarInicial()">Guardar</button>
+                </div>
+                <div class="value color-inicial" id="showInicial" style="margin-top: 12px;">0.00€</div>
+            </div>
+
+            <!-- Neto -->
+            <div class="concept-box box-neto">
+                <div class="label color-neto">Neto del Día</div>
+                <div class="neto-display" style="margin-top: 8px;">
+                    <div class="value color-neto" id="showNeto">0.00€</div>
+                    <div id="netoIcon" class="neto-icon neto-zero">=</div>
+                </div>
+                <div id="netoBreakdown" style="margin-top: 8px; font-size: 0.85em; color: #666; font-family: monospace;">
+                    Sin operaciones
+                </div>
+            </div>
+
+            <!-- Capital Final -->
+            <div class="concept-box box-final">
+                <div class="label color-final">Capital Final</div>
+                <div class="value color-final" id="showFinal" style="margin-top: 8px;">0.00€</div>
+            </div>
+
+            <!-- Operaciones (colapsable) -->
+            <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-top: 8px;">
+                <div style="font-weight: bold; color: #374151; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Operaciones</span>
+                    <span id="countTrans" style="font-size: 0.85em; color: #6b7280;">0</span>
+                </div>
+                
+                <div class="transaction-row">
+                    <div>
+                        <div style="font-size: 0.8em; margin-bottom: 4px;">Aportado</div>
+                        <input type="number" id="newAportado" placeholder="0.00" step="0.01">
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8em; margin-bottom: 4px;">Cuota</div>
+                        <input type="number" id="newCuota" placeholder="1.00" step="0.01">
+                    </div>
+                    <button class="btn btn-primary" onclick="addTrans()">Añadir</button>
+                </div>
+                
+                <div id="listaTrans"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let datos = {};
+        let diaActual = null;
+        const CLAVE_STORAGE = 'inversion2026_v6';
+
+        function init() {
+            const guardado = localStorage.getItem(CLAVE_STORAGE);
+            if (guardado) {
+                datos = JSON.parse(guardado);
+                recalcularTodo();
+                mostrarCalendario();
+                return;
+            }
+
+            for (let m = 0; m < 12; m++) {
+                const ultimoDia = new Date(2026, m + 1, 0).getDate();
+                for (let d = 1; d <= ultimoDia; d++) {
+                    const clave = `2026-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    datos[clave] = {
+                        inicialManual: null,
+                        inicial: 0,
+                        transacciones: [],
+                        neto: 0,
+                        final: 0
+                    };
+                }
+            }
+            recalcularTodo();
+            mostrarCalendario();
+        }
+
+        function recalcularTodo() {
+            const dias = Object.keys(datos).sort();
+            let anteriorFinal = 0;
+
+            for (const dia of dias) {
+                const d = datos[dia];
+                
+                if (d.inicialManual !== null) {
+                    d.inicial = d.inicialManual;
+                } else {
+                    d.inicial = anteriorFinal;
+                }
+
+                // Calcular neto: suma de (aportado * cuota - aportado) = aportado * (cuota - 1)
+                // O equivalentemente: obtenido - aportado
+                d.neto = 0;
+                d.transacciones.forEach(t => {
+                    const obtenido = t.aportado * t.cuota;
+                    d.neto += (obtenido - t.aportado); // Neto de esta transacción
+                });
+
+                // Final = Inicial + Neto
+                d.final = d.inicial + d.neto;
+
+                anteriorFinal = d.final;
+            }
+
+            guardarStorage();
+            actualizarResumen();
+        }
+
+        function guardarStorage() {
+            localStorage.setItem(CLAVE_STORAGE, JSON.stringify(datos));
+        }
+
+        function actualizarResumen() {
+            const primerDia = Object.values(datos)[0];
+            const ultimoDia = Object.values(datos)[Object.values(datos).length - 1];
+            
+            let totalNeto = 0;
+            Object.values(datos).forEach(d => totalNeto += d.neto);
+
+            document.getElementById('resInicial').textContent = formatear(primerDia?.inicial || 0);
+            document.getElementById('resNeto').textContent = (totalNeto >= 0 ? '+' : '') + formatear(totalNeto);
+            document.getElementById('resNeto').style.color = totalNeto >= 0 ? '#4ade80' : '#f87171';
+            document.getElementById('resFinal').textContent = formatear(ultimoDia?.final || 0);
+        }
+
+        function formatear(cantidad) {
+            return new Intl.NumberFormat('es-ES', {
+                style: 'currency',
+                currency: 'EUR'
+            }).format(cantidad);
+        }
+
+        function mostrarCalendario() {
+            const contenedor = document.getElementById('calendar');
+            contenedor.innerHTML = '';
+            const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+            meses.forEach((nombreMes, idx) => {
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'month-card';
+                
+                const header = document.createElement('div');
+                header.className = 'month-header';
+                header.textContent = `${nombreMes} 2026`;
+                tarjeta.appendChild(header);
+
+                const grid = document.createElement('div');
+                grid.className = 'days-grid';
+
+                ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(dia => {
+                    const th = document.createElement('div');
+                    th.className = 'day-header';
+                    th.textContent = dia;
+                    grid.appendChild(th);
+                });
+
+                const primerDia = new Date(2026, idx, 1).getDay();
+                const ajuste = primerDia === 0 ? 6 : primerDia - 1;
+                for (let i = 0; i < ajuste; i++) {
+                    const vacio = document.createElement('div');
+                    vacio.className = 'day-cell';
+                    vacio.style.background = '#f1f5f9';
+                    grid.appendChild(vacio);
+                }
+
+                const ultimoDia = new Date(2026, idx + 1, 0).getDate();
+                const hoy = new Date();
+
+                for (let d = 1; d <= ultimoDia; d++) {
+                    const clave = `2026-${String(idx+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const info = datos[clave];
+                    const celda = document.createElement('div');
+                    celda.className = 'day-cell';
+                    
+                    const fechaCheck = new Date(2026, idx, d);
+                    if (fechaCheck.toDateString() === hoy.toDateString()) {
+                        celda.style.border = '2px solid #3b82f6';
+                        celda.style.background = '#dbeafe';
+                    }
+
+                    let html = `<div class="day-number">${d}</div>`;
+                    
+                    if (info.transacciones.length > 0 || info.inicialManual !== null) {
+                        const badge = info.neto > 0 ? '<span class="badge badge-ok">+</span>' : 
+                                     info.neto < 0 ? '<span class="badge badge-loss">-</span>' : '';
+                        
+                        html += `<div style="font-size: 0.75em;">`;
+                        html += `<div style="color: #0369a1; font-weight:bold;">I: ${formatear(info.inicial).replace('€','')}</div>`;
+                        if (info.neto !== 0) {
+                            const colorNeto = info.neto > 0 ? '#059669' : '#dc2626';
+                            const signo = info.neto > 0 ? '+' : '';
+                            html += `<div style="color: ${colorNeto}; font-weight:bold;">N: ${signo}${formatear(info.neto).replace('€','')}</div>`;
+                        }
+                        html += `<div style="color: #7c3aed; font-weight: bold; border-top: 1px solid #e5e7eb; margin-top:2px; padding-top:2px; display:flex; justify-content:space-between; align-items:center;">`;
+                        html += `<span>F: ${formatear(info.final).replace('€','')}</span>${badge}`;
+                        html += `</div>`;
+                        html += `</div>`;
+                    }
+
+                    celda.innerHTML = html;
+                    celda.onclick = () => abrirModal(clave);
+                    grid.appendChild(celda);
+                }
+
+                tarjeta.appendChild(grid);
+                contenedor.appendChild(tarjeta);
+            });
+        }
+
+        function abrirModal(clave) {
+            diaActual = clave;
+            const d = datos[clave];
+            const fecha = new Date(clave);
+            
+            document.getElementById('modalTitle').textContent = fecha.toLocaleDateString('es-ES', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+
+            // Inicial
+            document.getElementById('inputInicial').value = d.inicialManual !== null ? d.inicialManual : '';
+            document.getElementById('showInicial').textContent = formatear(d.inicial);
+
+            // Neto
+            document.getElementById('showNeto').textContent = (d.neto >= 0 ? '+' : '') + formatear(d.neto);
+            document.getElementById('showNeto').style.color = d.neto > 0 ? '#059669' : d.neto < 0 ? '#dc2626' : '#6b7280';
+            
+            const icono = document.getElementById('netoIcon');
+            if (d.neto > 0) {
+                icono.textContent = '↑';
+                icono.className = 'neto-icon neto-positive';
+            } else if (d.neto < 0) {
+                icono.textContent = '↓';
+                icono.className = 'neto-icon neto-negative';
+            } else {
+                icono.textContent = '=';
+                icono.className = 'neto-icon neto-zero';
+            }
+
+            // Breakdown del neto
+            if (d.transacciones.length === 0) {
+                document.getElementById('netoBreakdown').textContent = 'Sin operaciones';
+            } else {
+                const totalAportado = d.transacciones.reduce((s, t) => s + t.aportado, 0);
+                const totalObtenido = d.transacciones.reduce((s, t) => s + (t.aportado * t.cuota), 0);
+                document.getElementById('netoBreakdown').innerHTML = `
+                    ${formatear(totalObtenido)} - ${formatear(totalAportado)} = ${formatear(d.neto)}
+                `;
+            }
+
+            // Final
+            document.getElementById('showFinal').textContent = formatear(d.final);
+
+            // Contador
+            document.getElementById('countTrans').textContent = `${d.transacciones.length} operaciones`;
+
+            // Lista de transacciones
+            const lista = document.getElementById('listaTrans');
+            if (d.transacciones.length === 0) {
+                lista.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Sin operaciones</div>';
+            } else {
+                lista.innerHTML = d.transacciones.map((t, i) => {
+                    const obtenido = t.aportado * t.cuota;
+                    const netoTrans = obtenido - t.aportado;
+                    const color = netoTrans > 0 ? '#059669' : netoTrans < 0 ? '#dc2626' : '#6b7280';
+                    
+                    return `
+                    <div class="transaction-row">
+                        <div>
+                            <div style="font-size: 0.75em; color: #666;">Aportado</div>
+                            <div style="font-weight: bold;">${formatear(t.aportado)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75em; color: #666;">Cuota ${t.cuota}x</div>
+                            <div style="font-weight: bold; color: ${color};">
+                                ${formatear(obtenido)}
+                            </div>
+                            <div style="font-size: 0.75em; color: ${color};">
+                                Neto: ${netoTrans > 0 ? '+' : ''}${formatear(netoTrans)}
+                            </div>
+                        </div>
+                        <button class="btn btn-danger" onclick="eliminarTrans(${i})" style="padding: 8px 12px;">×</button>
+                    </div>
+                `}).join('');
+            }
+
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            diaActual = null;
+            mostrarCalendario();
+        }
+
+        function guardarInicial() {
+            const valor = parseFloat(document.getElementById('inputInicial').value);
+            if (isNaN(valor) || valor < 0) {
+                alert('Introduce un valor válido');
+                return;
+            }
+            datos[diaActual].inicialManual = valor;
+            recalcularTodo();
+            abrirModal(diaActual);
+        }
+
+        function addTrans() {
+            const aportado = parseFloat(document.getElementById('newAportado').value);
+            const cuota = parseFloat(document.getElementById('newCuota').value);
+
+            if (isNaN(aportado) || aportado <= 0) {
+                alert('Aportado debe ser mayor que 0');
+                return;
+            }
+            if (isNaN(cuota)) {
+                alert('Introduce una cuota válida');
+                return;
+            }
+
+            datos[diaActual].transacciones.push({
+                aportado: aportado,
+                cuota: cuota
+            });
+
+            document.getElementById('newAportado').value = '';
+            document.getElementById('newCuota').value = '';
+
+            recalcularTodo();
+            abrirModal(diaActual);
+        }
+
+        function eliminarTrans(index) {
+            if (!confirm('¿Eliminar esta operación?')) return;
+            datos[diaActual].transacciones.splice(index, 1);
+            recalcularTodo();
+            abrirModal(diaActual);
+        }
+
+        function exportData() {
+            const blob = new Blob([JSON.stringify(datos, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `inversion_2026_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    datos = JSON.parse(e.target.result);
+                    recalcularTodo();
+                    mostrarCalendario();
+                    alert('Datos cargados correctamente');
+                } catch(err) {
+                    alert('Error al cargar archivo');
+                }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        function clearAll() {
+            if (!confirm('¿Borrar todos los datos?')) return;
+            localStorage.removeItem(CLAVE_STORAGE);
+            datos = {};
+            init();
+        }
+
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        init();
+    </script>
+</body>
+</html>
